@@ -3,7 +3,7 @@ Keji's helping functions for Quan&Meth 2010
 need numpy and scipy
 
 readFile(name,tag=0)
-initdata(hFile_in)
+initData(lineList)
 group(tempData)
 oneWay(dict_in)
 propVar(oneWayDict)
@@ -26,7 +26,7 @@ def readFile(name, tag=0):
 def initData(lineList):
     "columns=groups, first_row=names, -1=empty_cell, no blank lines"
     nameList=lineList[0].split()
-    dataList=[[int(a) for a in b.split()] for b in lineList[2:]]
+    dataList=[[int(a) for a in b.split()] for b in lineList[1:]]
     dataList=list(zip(*dataList))
     dataList=[array(filter(lambda b:b!=-1, a)) for a in dataList]
     dict_in=dict(zip(nameList, dataList))

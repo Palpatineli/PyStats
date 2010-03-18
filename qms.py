@@ -102,15 +102,15 @@ def welchADF(dict_in):
     "welch adjusted degrees of freedom test"
     vMean=array([a.mean() for a in dict_in.values()])
     vSize=array([a.size for a in dict_in.values()])
-    vWeight=array([a.size/a.var() for a in dict_in.values()])
+    vWeight=array([(a.size-1)/a.var() for a in dict_in.values()])
     adfMean=(vWeight*vMean).sum()/vWeight.sum()
     dfB=vSize.size-1.0
     lam=3.0*((1-vWeight/vWeight.sum())**2/(vSize-1)).sum()/(vSize.size**2-1)
 
     numerator=(vWeight*(vMean-adfMean)**2).sum()/dfB
-    denominator=1.0+2.0/3.0*(dfB-1.0)*lam
-    v_Value=nominator/denominator
+    denominator=1.0+2*(dfB-1.0)*lam/3
+    v_Value=numerator/denominator
     pValue=1-stats.f.cdf(v_Value,dfB,1.0/lam)
-    bigDict=dict({'V':v_Value,'p':pValue})
+    bigDict=dict({'V':v_Value,'p':pValue,'dfW':1/lam})
     return bigDict
 

@@ -5,6 +5,7 @@ need numpy and scipy
 readFile(name,tag=0)
 initData(lineList)
 group(tempData)
+
 oneWay(dict_in)
 propVar(oneWayDict)
 pwrOneWay(vMean, var, vSize)
@@ -45,7 +46,7 @@ def oneWay(dict_in):
     "normal one way fixed effect ANOVA, argument rows as groups, dict output" 
     vMean=array([a.mean() for a in dict_in.values()])
     vSize=array([a.size for a in dict_in.values()])
-    grandMean=vMean.mean()
+    grandMean=((vMean*vSize).sum())/(vSize.sum())
     dfB=vSize.size-1
     dfW=vSize.sum()-dfB-1
     SSB=((vMean**2)*vSize).sum()-(grandMean**2)*vSize.sum()
@@ -82,8 +83,7 @@ def contrastOneWay(dict_in, coef):
     vCoef=array(zeroDict.values()) #give coef the right order, pad with zero
     vMean=array([a.mean() for a in dict_in.values()])
     vSize=array([a.size for a in dict_in.values()])
-    grandMean=vMean.mean()
-    dfB=vSize.size-1
+    grandMean=((vMean*vSize).sum())/(vSize.sum())
     dfW=vSize.sum()-dfB-1
     SSW=array([a.var()*a.size for a in dict_in.values()]).sum()
     nominator=(1.0*vMean*vCoef).sum()
@@ -107,7 +107,7 @@ def welchADF(dict_in):
     dfB=vSize.size-1.0
     lam=3.0*((1-vWeight/vWeight.sum())**2/(vSize-1)).sum()/(vSize.size**2-1)
 
-    nominator=(vWeight*(vMean-adfMean)**2).sum()/dfB
+    numerator=(vWeight*(vMean-adfMean)**2).sum()/dfB
     denominator=1.0+2.0/3.0*(dfB-1.0)*lam
     v_Value=nominator/denominator
     pValue=1-stats.f.cdf(v_Value,dfB,1.0/lam)

@@ -101,7 +101,7 @@ def contrastOneWay(dict_in, coef):
 
 def leveneTest(dict_in):
     "levene's test using qms.oneWay"
-    value_out=[absolute(a-mean(a)) for a in dict_in.values()]
+    value_out=[np.abs(a-a.mean()) for a in dict_in.values()]
     dict_out=dict(zip(dict_in.keys(), value_out))
     return oneWay(dict_out)
 

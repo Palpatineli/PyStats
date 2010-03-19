@@ -12,6 +12,7 @@ pwrOneWay(vMean, var, vSize)
 contrastOneWay(dict_in, coef)
 leveneTest(dict_in)
 welchADF(dict_in)
+studentizedRange(rValue,dfError,errorRateFW)
 """
 from __future__ import division
 import numpy as np

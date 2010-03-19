@@ -18,6 +18,10 @@ from __future__ import division
 import numpy as np
 import scipy.stats as st 
 
+#to keep the relative path usable
+from twisted.python.modules import getModule
+moduleDirectory = getModule(__name__).filePath.parent()
+
 def readFile(name, tag=0):
     "read file as table, tag=number of columns for group names"
     hFile=open(name)
@@ -120,26 +124,13 @@ def welchADF(dict_in):
 
 def studentizedRange(rValue,dfError,errorRateFW):
     "studentized range table, r=number of means, r and df are int, -1 for    infinity, ER .01 or .05"
-    hFile=open('tTRange')
-    lineList=hFile.readlines()
+    lineList=moduleDirectory.child('tTRange').open().readlines()
     table=[[float(a) for a in b.split()] for b in lineList]
-    five=[]
-    one=[]
-    odd=1
-    for a in table:
-        if odd==1:
-            five.append(a)
-            odd=0
-        else:
-            one.append(a)
-            odd=1
-    fiveTable=np.array(reduce(lambda x,y:x+y,five)).reshape(22,19)
-    oneTable=np.array(reduce(lambda x,y:x+y,one)).reshape(22,19)
     dfList=range(5,21)
     dfList.extend([24,30,40,60,120,-1])
     indice=dfList.index(dfError)
     if errorRateFW==0.05:
-        return fiveTable[indice,rValue-2]
+        return table[indice*2][rValue-2]
     if errorRateFW==0.01:
-        return oneTable[indice,rValue-2]
+        return table[indice*2+1][rValue-2]
     return

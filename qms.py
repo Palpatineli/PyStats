@@ -14,8 +14,8 @@ leveneTest(dict_in)
 welchADF(dict_in)
 """
 from __future__ import division
-from numpy import *
-from scipy import stats
+import numpy as np
+import scipy.stats as st 
 
 def readFile(name, tag=0):
     "read file as table, tag=number of columns for group names"
@@ -29,33 +29,33 @@ def initData(lineList):
     nameList=lineList[0].split()
     dataList=[[int(a) for a in b.split()] for b in lineList[1:]]
     dataList=list(zip(*dataList))
-    dataList=[array(filter(lambda b:b!=-1, a)) for a in dataList]
+    dataList=[np.array(filter(lambda b:b!=-1, a)) for a in dataList]
     dict_in=dict(zip(nameList, dataList))
     return dict_in
 
 def group(tempData):
-    "column 1 as group name and column 2 as data, return dict of ndarray" 
+    "column 1 as group name and column 2 as data, return dict of ndnp.array" 
     data=list(zip(*tempData))
     nameList=list(set(data[0]))
     bigMat=[[c[1] for c in (filter(lambda a:a[0]==b, tempData))] for b in nameList]
-    arrayList=[array(a) for a in bigMat]
-    bigDict=dict(zip(nameList, arrayList))
+    np.arrayList=[np.array(a) for a in bigMat]
+    bigDict=dict(zip(nameList, np.arrayList))
     return bigDict
 
 def oneWay(dict_in):
     "normal one way fixed effect ANOVA, argument rows as groups, dict output" 
-    vMean=array([a.mean() for a in dict_in.values()])
-    vSize=array([a.size for a in dict_in.values()])
+    vMean=np.array([a.mean() for a in dict_in.values()])
+    vSize=np.array([a.size for a in dict_in.values()])
     grandMean=((vMean*vSize).sum())/(vSize.sum())
     dfB=vSize.size-1
     dfW=vSize.sum()-dfB-1
     SSB=((vMean**2)*vSize).sum()-(grandMean**2)*vSize.sum()
-    SSW=array([a.var()*a.size for a in dict_in.values()]).sum()
+    SSW=np.array([a.var()*a.size for a in dict_in.values()]).sum()
     SST=SSB+SSW
     MSB=SSB/dfB
     MSW=SSW/dfW
     fValue=MSB/MSW
-    pValue=1-stats.f.cdf(fValue,dfB,dfW)
+    pValue=1-st.f.cdf(fValue,dfB,dfW)
     bigDict=dict({'SSW':SSW,'SSB':SSB,'SST':SST,'dfW':dfW,'dfB':dfB,'MSW':MSW,'MSB':MSB,'F':fValue,'p':pValue})
     return bigDict
 
@@ -72,24 +72,26 @@ def pwrOneWay(vMean, var, vSize):
     "from vMean, var within, vSize calculate the power, assume alpha=0.05"
     grandMean=(vMean*vSize).sum()/vSize.sum()
     ncp=(vSize*(vMean-grandMean)**2).sum()/var
-    critValue=stats.f.ppf(0.95, vSize.size-1, vSize.sum()-vSize.size)
-    power=1.0-stats.ncf.cdf(critValue, vSize.size-1, vSize.sum()-vSize.size, ncp) 
+    critValue=st.f.ppf(0.95, vSize.size-1, vSize.sum()-vSize.size)
+    power=1.0-st.ncf.cdf(critValue, vSize.size-1, vSize.sum()-vSize.size, ncp) 
     return power
 
 def contrastOneWay(dict_in, coef):
     "from the data in dict_in, and coefficient dict in coef"
     zeroDict=dict_in.fromkeys(dict_in.keys(),0)
     zeroDict.update(coef)
-    vCoef=array(zeroDict.values()) #give coef the right order, pad with zero
-    vMean=array([a.mean() for a in dict_in.values()])
-    vSize=array([a.size for a in dict_in.values()])
+    vCoef=np.array(zeroDict.values()) #give coef the right order, pad with zero
+    vMean=np.array([a.mean() for a in dict_in.values()])
+    vSize=np.array([a.size for a in dict_in.values()])
     grandMean=((vMean*vSize).sum())/(vSize.sum())
+    dfB=vSize.size-1
     dfW=vSize.sum()-dfB-1
-    SSW=array([a.var()*a.size for a in dict_in.values()]).sum()
-    nominator=(1.0*vMean*vCoef).sum()
-    denominator=sqrt(SSW*(1.0*vCoef**2/vSize).sum())
-    tValue=1.0*nominator/denominator
-    contrast=1-stats.t.cdf(tValue, dfW)
+    SSW=np.array([a.var()*a.size for a in dict_in.values()]).sum()
+    MSW=SSW/dfW
+    numerator=(1.0*vMean*vCoef).sum()
+    denominator=np.sqrt(MSW*(vCoef**2/vSize).sum())
+    tValue=1.0*numerator/denominator
+    contrast=1-st.t.cdf(tValue, dfW)
     return contrast
 
 def leveneTest(dict_in):
@@ -100,9 +102,10 @@ def leveneTest(dict_in):
 
 def welchADF(dict_in):
     "welch adjusted degrees of freedom test"
-    vMean=array([a.mean() for a in dict_in.values()])
-    vSize=array([a.size for a in dict_in.values()])
-    vWeight=array([(a.size-1)/a.var() for a in dict_in.values()])
+    vMean=np.array([a.mean() for a in dict_in.values()])
+    vSize=np.array([a.size for a in dict_in.values()])
+    #a.size-1 because a.var() is not estimation
+    vWeight=np.array([(a.size-1)/a.var() for a in dict_in.values()])
     adfMean=(vWeight*vMean).sum()/vWeight.sum()
     dfB=vSize.size-1.0
     lam=3.0*((1-vWeight/vWeight.sum())**2/(vSize-1)).sum()/(vSize.size**2-1)
@@ -110,7 +113,32 @@ def welchADF(dict_in):
     numerator=(vWeight*(vMean-adfMean)**2).sum()/dfB
     denominator=1.0+2*(dfB-1.0)*lam/3
     v_Value=numerator/denominator
-    pValue=1-stats.f.cdf(v_Value,dfB,1.0/lam)
+    pValue=1-st.f.cdf(v_Value,dfB,1.0/lam)
     bigDict=dict({'V':v_Value,'p':pValue,'dfW':1/lam})
     return bigDict
 
+def studentizedRange(rValue,dfError,errorRateFW):
+    "studentized range table, r=number of means, r and df are int, -1 for    infinity, ER .01 or .05"
+    hFile=open('tTRange')
+    lineList=hFile.readlines()
+    table=[[float(a) for a in b.split()] for b in lineList]
+    five=[]
+    one=[]
+    odd=1
+    for a in table:
+        if odd==1:
+            five.append(a)
+            odd=0
+        else:
+            one.append(a)
+            odd=1
+    fiveTable=np.array(reduce(lambda x,y:x+y,five)).reshape(22,19)
+    oneTable=np.array(reduce(lambda x,y:x+y,one)).reshape(22,19)
+    dfList=range(5,21)
+    dfList.extend([24,30,40,60,120,-1])
+    indice=dfList.index(dfError)
+    if errorRateFW==0.05:
+        return fiveTable[indice,rValue-2]
+    if errorRateFW==0.01:
+        return oneTable[indice,rValue-2]
+    return
